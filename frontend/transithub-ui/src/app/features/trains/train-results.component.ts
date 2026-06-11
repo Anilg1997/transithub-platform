@@ -1,12 +1,16 @@
-import { Component, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { NgFor, CurrencyPipe } from '@angular/common';
+import { Component, signal, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { NgFor, CurrencyPipe, NgIf } from '@angular/common';
+import { inject } from '@angular/core';
+import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-train-results', standalone: true, imports: [NgFor, CurrencyPipe],
+  selector: 'app-train-results', standalone: true, imports: [NgFor, CurrencyPipe, NgIf],
   template: `
     <div class="container results-page">
       <div class="results">
+        <div *ngIf="loading()" class="loading">Loading trains...</div>
+        <div *ngIf="error()" class="error-msg">{{error()}}</div>
         <div *ngFor="let train of trains()" class="train-card" (click)="selectTrain(train)">
           <div class="train-header">
             <span class="train-name">{{train.trainName}}</span>
@@ -15,7 +19,7 @@ import { NgFor, CurrencyPipe } from '@angular/common';
           <div class="train-details">
             <div class="time-block">
               <span class="time">{{train.departureTime}}</span>
-              <span class="station">{{train.origin}}</span>
+              <span class="station">{{train.origin?.code || train.origin}}</span>
             </div>
             <div class="duration-block">
               <span>{{train.duration}} min</span>
@@ -23,7 +27,7 @@ import { NgFor, CurrencyPipe } from '@angular/common';
             </div>
             <div class="time-block">
               <span class="time">{{train.arrivalTime}}</span>
-              <span class="station">{{train.destination}}</span>
+              <span class="station">{{train.destination?.code || train.destination}}</span>
             </div>
             <div class="coaches-block">
               <div *ngFor="let c of train.coaches" class="coach-tag" (click)="$event.stopPropagation(); selectCoach(train, c)">
@@ -34,6 +38,7 @@ import { NgFor, CurrencyPipe } from '@angular/common';
             </div>
           </div>
         </div>
+        <div *ngIf="!loading() && trains().length === 0" class="no-results">No trains found for this route.</div>
       </div>
     </div>
   `,
@@ -57,14 +62,37 @@ import { NgFor, CurrencyPipe } from '@angular/common';
     .coach-fare { display: block; color: var(--primary); font-weight: 700; }
     .coach-seats { font-size: 11px; }
     .low { color: var(--danger); }
+    .loading, .no-results { text-align: center; padding: 40px; color: var(--text-secondary); }
+    .error-msg { background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 8px; text-align: center; }
   `]
 })
-export class TrainResultsComponent {
-  trains = signal([
-    { id: '1', trainNumber: '12301', trainName: 'Rajdhani Express', origin: 'NDLS', destination: 'HWH', departureTime: '16:55', arrivalTime: '09:55', duration: 1020, coaches: [{coachType:'3AC', fare: 1800, availableBerths: 45},{coachType:'2AC', fare: 2500, availableBerths: 12},{coachType:'1AC', fare: 4200, availableBerths: 5}] },
-    { id: '2', trainNumber: '12951', trainName: 'Mumbai Rajdhani', origin: 'NDLS', destination: 'BCT', departureTime: '16:35', arrivalTime: '08:35', duration: 960, coaches: [{coachType:'3AC', fare: 2200, availableBerths: 8},{coachType:'2AC', fare: 3000, availableBerths: 3}] },
-  ]);
-  constructor(private router: Router) {}
+export class TrainResultsComponent implements OnInit {
+  trains = signal<any[]>([]);
+  loading = signal(true);
+  error = signal('');
+  private graphql = inject(GraphqlService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      const from = params['from'] || 'NDLS';
+      const to = params['to'] || 'HWH';
+      const date = params['date'] || new Date().toISOString().split('T')[0];
+      this.loading.set(true);
+      this.graphql.searchTrains(from, to, date).subscribe({
+        next: (data: any) => {
+          this.trains.set(data?.searchTrains || []);
+          this.loading.set(false);
+        },
+        error: (err: any) => {
+          this.error.set(err?.message || 'Failed to load trains');
+          this.loading.set(false);
+        }
+      });
+    });
+  }
+
   selectTrain(train: any) { this.router.navigate(['/booking/train', train.id]); }
   selectCoach(train: any, coach: any) { this.router.navigate(['/booking/train', train.id], { queryParams: { coach: coach.coachType } }); }
 }

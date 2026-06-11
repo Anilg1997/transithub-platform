@@ -1,12 +1,16 @@
-import { Component, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { NgFor, CurrencyPipe } from '@angular/common';
+import { Component, signal, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { NgFor, CurrencyPipe, NgIf } from '@angular/common';
+import { inject } from '@angular/core';
+import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-bus-results', standalone: true, imports: [NgFor, CurrencyPipe],
+  selector: 'app-bus-results', standalone: true, imports: [NgFor, CurrencyPipe, NgIf],
   template: `
     <div class="container results-page">
       <div class="results">
+        <div *ngIf="loading()" class="loading">Loading buses...</div>
+        <div *ngIf="error()" class="error-msg">{{error()}}</div>
         <div *ngFor="let bus of buses()" class="bus-card" (click)="selectBus(bus)">
           <div class="bus-header">
             <span class="operator">{{bus.operator}}</span>
@@ -23,6 +27,7 @@ import { NgFor, CurrencyPipe } from '@angular/common';
             </div>
           </div>
         </div>
+        <div *ngIf="!loading() && buses().length === 0" class="no-results">No buses found for this route.</div>
       </div>
     </div>
   `,
@@ -41,13 +46,36 @@ import { NgFor, CurrencyPipe } from '@angular/common';
     .price { display: block; font-size: 24px; font-weight: 700; color: var(--primary); }
     .seats { font-size: 13px; color: var(--text-secondary); }
     .book-btn { margin-top: 8px; background: var(--primary); color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+    .loading, .no-results { text-align: center; padding: 40px; color: var(--text-secondary); }
+    .error-msg { background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 8px; text-align: center; }
   `]
 })
-export class BusResultsComponent {
-  buses = signal([
-    { id: '1', operator: 'VRL Travels', busType: 'AC Sleeper', origin: 'Mumbai', destination: 'Pune', departureTime: '22:00', arrivalTime: '05:00', duration: 420, fare: 800, availableSeats: 12 },
-    { id: '2', operator: 'SRS Travels', busType: 'Volvo', origin: 'Mumbai', destination: 'Pune', departureTime: '06:30', arrivalTime: '11:00', duration: 270, fare: 1200, availableSeats: 28 },
-  ]);
-  constructor(private router: Router) {}
+export class BusResultsComponent implements OnInit {
+  buses = signal<any[]>([]);
+  loading = signal(true);
+  error = signal('');
+  private graphql = inject(GraphqlService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      const origin = params['from'] || 'Mumbai';
+      const dest = params['to'] || 'Pune';
+      const date = params['date'] || new Date().toISOString().split('T')[0];
+      this.loading.set(true);
+      this.graphql.searchBuses(origin, dest, date).subscribe({
+        next: (data: any) => {
+          this.buses.set(data?.searchBuses || []);
+          this.loading.set(false);
+        },
+        error: (err: any) => {
+          this.error.set(err?.message || 'Failed to load buses');
+          this.loading.set(false);
+        }
+      });
+    });
+  }
+
   selectBus(bus: any) { this.router.navigate(['/booking/bus', bus.id]); }
 }

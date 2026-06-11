@@ -1,17 +1,21 @@
-import { Component, signal } from '@angular/core';
-import { NgFor, DatePipe, CurrencyPipe } from '@angular/common';
+import { Component, signal, OnInit, effect } from '@angular/core';
+import { NgFor, DatePipe, CurrencyPipe, NgIf } from '@angular/common';
+import { inject } from '@angular/core';
+import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-trips', standalone: true, imports: [NgFor, DatePipe, CurrencyPipe],
+  selector: 'app-trips', standalone: true, imports: [NgFor, DatePipe, CurrencyPipe, NgIf],
   template: `
     <div class="container trips-page">
       <h1>My Trips</h1>
+      <div *ngIf="loading()" class="loading">Loading trips...</div>
+      <div *ngIf="error()" class="error-msg">{{error()}}</div>
       <div class="trip-tabs">
-        <button *ngFor="let tab of tabs" (click)="activeTab.set(tab)" 
+        <button *ngFor="let tab of tabs" (click)="activeTab.set(tab)"
                 [class.active]="activeTab() === tab" class="tab-btn">{{tab}}</button>
       </div>
       <div class="trip-list">
-        <div *ngFor="let trip of trips()" class="trip-card">
+        <div *ngFor="let trip of filteredTrips()" class="trip-card">
           <div class="trip-header">
             <span class="mode-badge" [class.flight]="trip.mode==='FLIGHT'" [class.bus]="trip.mode==='BUS'" [class.train]="trip.mode==='TRAIN'">
               {{trip.mode === 'FLIGHT' ? '✈️' : trip.mode === 'BUS' ? '🚌' : '🚄'}} {{trip.mode}}
@@ -27,11 +31,8 @@ import { NgFor, DatePipe, CurrencyPipe } from '@angular/common';
             <span>Ref: {{trip.bookingRef}}</span>
             <span class="fare">₹{{trip.totalFare}}</span>
           </div>
-          <div class="trip-actions">
-            <button class="btn-outline">View Details</button>
-            <button *ngIf="trip.status === 'CONFIRMED'" class="btn-danger">Cancel</button>
-          </div>
         </div>
+        <div *ngIf="!loading() && filteredTrips().length === 0" class="no-trips">No trips found.</div>
       </div>
     </div>
   `,
@@ -52,17 +53,52 @@ import { NgFor, DatePipe, CurrencyPipe } from '@angular/common';
     .arrow { margin: 0 12px; color: var(--text-secondary); }
     .trip-info { display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; }
     .fare { font-weight: 700; color: var(--text); }
-    .trip-actions { display: flex; gap: 12px; }
-    .btn-outline { border: 2px solid var(--primary); color: var(--primary); padding: 8px 20px; border-radius: 8px; background: transparent; cursor: pointer; font-weight: 600; }
-    .btn-danger { border: 2px solid var(--danger); color: var(--danger); padding: 8px 20px; border-radius: 8px; background: transparent; cursor: pointer; font-weight: 600; }
+    .loading, .no-trips { text-align: center; padding: 40px; color: var(--text-secondary); }
+    .error-msg { background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 8px; text-align: center; margin-bottom: 16px; }
   `]
 })
-export class TripsComponent {
+export class TripsComponent implements OnInit {
   tabs = ['All', 'Flights', 'Buses', 'Trains'];
   activeTab = signal('All');
-  trips = signal([
-    { id: '1', bookingRef: 'BK-A1B2C3', mode: 'FLIGHT', from: 'DEL', to: 'BOM', status: 'CONFIRMED', totalFare: 5500, date: '2024-12-15' },
-    { id: '2', bookingRef: 'BK-D4E5F6', mode: 'BUS', from: 'Mumbai', to: 'Pune', status: 'CONFIRMED', totalFare: 800, date: '2024-12-20' },
-    { id: '3', bookingRef: 'BK-G7H8I9', mode: 'TRAIN', from: 'NDLS', to: 'HWH', status: 'CANCELLED', totalFare: 1800, date: '2024-11-10' },
-  ]);
+  trips = signal<any[]>([]);
+  filteredTrips = signal<any[]>([]);
+  loading = signal(true);
+  error = signal('');
+  private graphql = inject(GraphqlService);
+
+  constructor() {
+    effect(() => {
+      const tab = this.activeTab();
+      const all = this.trips();
+      if (tab === 'All') {
+        this.filteredTrips.set(all);
+      } else {
+        const mode = tab.replace('s', '');
+        this.filteredTrips.set(all.filter(t => t.mode === mode));
+      }
+    });
+  }
+
+  ngOnInit() {
+    this.graphql.myTrips().subscribe({
+      next: (data: any) => {
+        const raw = data?.myBookings || [];
+        const mapped = raw.map((b: any) => ({
+          id: b.id, bookingRef: b.combinedRef || b.segments?.[0]?.bookingRef || '',
+          mode: b.segments?.[0]?.mode || 'FLIGHT',
+          from: b.segments?.[0]?.mode || '',
+          to: '',
+          status: b.status || 'CONFIRMED',
+          totalFare: b.totalFare || 0,
+          date: b.createdAt,
+        }));
+        this.trips.set(mapped);
+        this.loading.set(false);
+      },
+      error: (err: any) => {
+        this.error.set(err?.message || 'Failed to load trips');
+        this.loading.set(false);
+      }
+    });
+  }
 }

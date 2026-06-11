@@ -1,9 +1,11 @@
-import { Component, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { NgFor, CurrencyPipe, DatePipe } from '@angular/common';
+import { Component, signal, OnInit } from '@angular/core';
+import { Router, ActivatedRoute } from '@angular/router';
+import { NgFor, CurrencyPipe, DatePipe, NgIf } from '@angular/common';
+import { inject } from '@angular/core';
+import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-flight-results', standalone: true, imports: [NgFor, CurrencyPipe, DatePipe],
+  selector: 'app-flight-results', standalone: true, imports: [NgFor, CurrencyPipe, DatePipe, NgIf],
   template: `
     <div class="container results-page">
       <div class="filters">
@@ -21,6 +23,8 @@ import { NgFor, CurrencyPipe, DatePipe } from '@angular/common';
         </div>
       </div>
       <div class="results">
+        <div *ngIf="loading()" class="loading">Loading flights...</div>
+        <div *ngIf="error()" class="error-msg">{{error()}}</div>
         <div *ngFor="let flight of flights()" class="flight-card" (click)="selectFlight(flight)">
           <div class="flight-header">
             <span class="airline">{{flight.airline}}</span>
@@ -29,7 +33,7 @@ import { NgFor, CurrencyPipe, DatePipe } from '@angular/common';
           <div class="flight-details">
             <div class="time-block">
               <span class="time">{{flight.departureTime}}</span>
-              <span class="city">{{flight.origin}}</span>
+              <span class="city">{{flight.origin?.code || flight.origin}}</span>
             </div>
             <div class="duration-block">
               <span class="duration">{{flight.duration}} min</span>
@@ -39,7 +43,7 @@ import { NgFor, CurrencyPipe, DatePipe } from '@angular/common';
             </div>
             <div class="time-block">
               <span class="time">{{flight.arrivalTime}}</span>
-              <span class="city">{{flight.destination}}</span>
+              <span class="city">{{flight.destination?.code || flight.destination}}</span>
             </div>
             <div class="price-block">
               <span class="price">₹{{flight.totalFare}}</span>
@@ -47,6 +51,7 @@ import { NgFor, CurrencyPipe, DatePipe } from '@angular/common';
             </div>
           </div>
         </div>
+        <div *ngIf="!loading() && flights().length === 0" class="no-results">No flights found. Try different dates or routes.</div>
       </div>
     </div>
   `,
@@ -77,14 +82,36 @@ import { NgFor, CurrencyPipe, DatePipe } from '@angular/common';
     .price { display: block; font-size: 22px; font-weight: 700; color: var(--primary); }
     .seats { font-size: 12px; }
     .low { color: var(--danger); font-weight: 600; }
+    .loading, .no-results { text-align: center; padding: 40px; color: var(--text-secondary); }
+    .error-msg { background: #FEF2F2; color: #DC2626; padding: 12px; border-radius: 8px; margin-bottom: 16px; text-align: center; }
   `]
 })
-export class FlightResultsComponent {
-  flights = signal([
-    { id: '1', flightNumber: 'AI101', airline: 'Air India', origin: 'DEL', destination: 'BOM', departureTime: '06:30', arrivalTime: '08:45', duration: 135, stops: 0, totalFare: 5500, availableSeats: 25 },
-    { id: '2', flightNumber: '6E201', airline: 'IndiGo', origin: 'DEL', destination: 'BOM', departureTime: '09:15', arrivalTime: '11:30', duration: 135, stops: 0, totalFare: 4200, availableSeats: 8 },
-    { id: '3', flightNumber: 'SG301', airline: 'SpiceJet', origin: 'DEL', destination: 'BOM', departureTime: '14:00', arrivalTime: '16:45', duration: 165, stops: 1, totalFare: 3800, availableSeats: 45 },
-  ]);
-  constructor(private router: Router) {}
+export class FlightResultsComponent implements OnInit {
+  flights = signal<any[]>([]);
+  loading = signal(true);
+  error = signal('');
+  private graphql = inject(GraphqlService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      const origin = params['from'] || 'DEL';
+      const dest = params['to'] || 'BOM';
+      const date = params['date'] || new Date().toISOString().split('T')[0];
+      this.loading.set(true);
+      this.graphql.searchFlights(origin, dest, date).subscribe({
+        next: (data: any) => {
+          this.flights.set(data?.searchFlights || []);
+          this.loading.set(false);
+        },
+        error: (err: any) => {
+          this.error.set(err?.message || 'Failed to load flights');
+          this.loading.set(false);
+        }
+      });
+    });
+  }
+
   selectFlight(flight: any) { this.router.navigate(['/booking/flight', flight.id]); }
 }

@@ -1,57 +1,59 @@
-import { Component, signal } from '@angular/core';
-import { NgFor, CurrencyPipe } from '@angular/common';
+import { Component, signal, OnInit } from '@angular/core';
+import { NgFor, CurrencyPipe, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { inject } from '@angular/core';
+import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-profile', standalone: true, imports: [NgFor, FormsModule, CurrencyPipe],
+  selector: 'app-profile', standalone: true, imports: [NgFor, FormsModule, CurrencyPipe, NgIf],
   template: `
     <div class="container profile-page">
-      <div class="profile-header">
-        <div class="avatar">{{user().fullName.charAt(0)}}</div>
-        <div class="user-info">
-          <h2>{{user().fullName}}</h2>
-          <p>{{user().email}}</p>
-          <span class="tier-badge">{{user().loyaltyTier}}</span>
-        </div>
-      </div>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-value">{{user().loyaltyPoints}}</span>
-          <span class="stat-label">Loyalty Points</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value">₹{{walletBalance() | number}}</span>
-          <span class="stat-label">Wallet Balance</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-value">{{bookingsCount()}}</span>
-          <span class="stat-label">Total Bookings</span>
-        </div>
-      </div>
-      <div class="section">
-        <h3>My Travellers</h3>
-        <div *ngFor="let t of travellers()" class="traveller-card">
-          <div class="traveller-info">
-            <span class="name">{{t.name}}</span>
-            <span class="details">Age: {{t.age}} · {{t.gender}} · {{t.idType}}</span>
+      <div *ngIf="loading()" class="loading">Loading profile...</div>
+      <div *ngIf="error()" class="error-msg">{{error()}}</div>
+      <div *ngIf="!loading()">
+        <div class="profile-header">
+          <div class="avatar">{{user().fullName?.charAt(0) || 'U'}}</div>
+          <div class="user-info">
+            <h2>{{user().fullName}}</h2>
+            <p>{{user().email}}</p>
+            <span class="tier-badge">{{user().loyaltyTier || 'Silver'}}</span>
           </div>
-          <button class="remove-btn" (click)="removeTraveller(t)">✕</button>
         </div>
-        <div *ngIf="showAddForm()" class="add-form">
-          <input [(ngModel)]="newTraveller.name" placeholder="Name" class="input">
-          <input [(ngModel)]="newTraveller.age" type="number" placeholder="Age" class="input small">
-          <select [(ngModel)]="newTraveller.gender" class="input small">
-            <option value="M">Male</option><option value="F">Female</option>
-          </select>
-          <button (click)="saveTraveller()" class="save-btn">Save</button>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-value">{{user().loyaltyPoints || 0}}</span>
+            <span class="stat-label">Loyalty Points</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">₹{{walletBalance() | number}}</span>
+            <span class="stat-label">Wallet Balance</span>
+          </div>
         </div>
-        <button (click)="showAddForm.set(true)" *ngIf="!showAddForm()" class="add-btn">+ Add Traveller</button>
-      </div>
-      <div class="section">
-        <h3>Add Money to Wallet</h3>
-        <div class="wallet-topup">
-          <input [(ngModel)]="topupAmount" type="number" placeholder="Amount" class="input">
-          <button (click)="topup()" class="topup-btn">Add ₹{{topupAmount || 0}}</button>
+        <div class="section">
+          <h3>My Travellers</h3>
+          <div *ngFor="let t of travellers()" class="traveller-card">
+            <div class="traveller-info">
+              <span class="name">{{t.name}}</span>
+              <span class="details">Age: {{t.age}} · {{t.gender}} · {{t.idType}}</span>
+            </div>
+            <button class="remove-btn" (click)="removeTraveller(t)">✕</button>
+          </div>
+          <div *ngIf="showAddForm()" class="add-form">
+            <input [(ngModel)]="newTraveller.name" placeholder="Name" class="input">
+            <input [(ngModel)]="newTraveller.age" type="number" placeholder="Age" class="input small">
+            <select [(ngModel)]="newTraveller.gender" class="input small">
+              <option value="M">Male</option><option value="F">Female</option>
+            </select>
+            <button (click)="saveTraveller()" class="save-btn">Save</button>
+          </div>
+          <button (click)="showAddForm.set(true)" *ngIf="!showAddForm()" class="add-btn">+ Add Traveller</button>
+        </div>
+        <div class="section">
+          <h3>Add Money to Wallet</h3>
+          <div class="wallet-topup">
+            <input [(ngModel)]="topupAmount" type="number" placeholder="Amount" class="input">
+            <button (click)="topup()" class="topup-btn">Add ₹{{topupAmount || 0}}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -63,7 +65,7 @@ import { FormsModule } from '@angular/forms';
     .user-info h2 { margin: 0; }
     .user-info p { color: var(--text-secondary); margin: 4px 0; }
     .tier-badge { background: #FEF3C7; color: #92400E; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 32px; }
     .stat-card { background: white; padding: 24px; border-radius: 12px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
     .stat-value { display: block; font-size: 24px; font-weight: 700; color: var(--primary); }
     .stat-label { color: var(--text-secondary); font-size: 13px; }
@@ -80,27 +82,67 @@ import { FormsModule } from '@angular/forms';
     .add-btn { background: none; border: 2px dashed #CBD5E1; padding: 12px; width: 100%; border-radius: 10px; cursor: pointer; color: var(--text-secondary); }
     .wallet-topup { display: flex; gap: 12px; }
     .topup-btn { background: var(--accent); color: white; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+    .loading, .error-msg { text-align: center; padding: 40px; }
+    .error-msg { background: #FEF2F2; color: #DC2626; border-radius: 8px; }
   `]
 })
-export class ProfileComponent {
-  user = signal({ fullName: 'Anil Kumar', email: 'anil@example.com', loyaltyPoints: 2450, loyaltyTier: 'Gold' });
-  walletBalance = signal(3500);
-  bookingsCount = signal(12);
-  travellers = signal([
-    { name: 'Anil Kumar', age: 28, gender: 'M', idType: 'Aadhaar' },
-    { name: 'Priya Kumar', age: 26, gender: 'F', idType: 'PAN' },
-  ]);
+export class ProfileComponent implements OnInit {
+  user = signal<any>({ fullName: 'User', email: '' });
+  walletBalance = signal(0);
+  travellers = signal<any[]>([]);
   showAddForm = signal(false);
   newTraveller = { name: '', age: 0, gender: 'M' };
   topupAmount = 0;
+  loading = signal(true);
+  error = signal('');
+  private graphql = inject(GraphqlService);
+
+  ngOnInit() {
+    this.graphql.myProfile().subscribe({
+      next: (data: any) => { this.user.set(data?.myProfile || this.user()); this.loading.set(false); },
+      error: () => { this.loading.set(false); }
+    });
+    this.graphql.walletBalance().subscribe({
+      next: (data: any) => { this.walletBalance.set(data?.walletBalance || 0); },
+      error: () => {}
+    });
+    this.graphql.myTravellers().subscribe({
+      next: (data: any) => { this.travellers.set(data?.myTravellers || []); },
+      error: () => {}
+    });
+  }
 
   saveTraveller() {
     if (this.newTraveller.name) {
-      this.travellers.update(t => [...t, { ...this.newTraveller, idType: 'Aadhaar' }]);
-      this.newTraveller = { name: '', age: 0, gender: 'M' };
-      this.showAddForm.set(false);
+      this.graphql.addTraveller(this.newTraveller.name, this.newTraveller.age, this.newTraveller.gender, 'AADHAAR', '').subscribe({
+        next: (data: any) => {
+          if (data?.addTraveller) this.travellers.update(t => [...t, data.addTraveller]);
+          this.newTraveller = { name: '', age: 0, gender: 'M' };
+          this.showAddForm.set(false);
+        },
+        error: () => {}
+      });
     }
   }
-  removeTraveller(t: any) { this.travellers.update(list => list.filter(x => x !== t)); }
-  topup() { if (this.topupAmount > 0) { this.walletBalance.update(b => b + this.topupAmount); this.topupAmount = 0; } }
+
+  removeTraveller(t: any) {
+    if (t.id) {
+      this.graphql.deleteTraveller(t.id).subscribe({
+        next: () => { this.travellers.update(list => list.filter(x => x !== t)); },
+        error: () => {}
+      });
+    }
+  }
+
+  topup() {
+    if (this.topupAmount > 0) {
+      this.graphql.addMoneyToWallet(this.topupAmount).subscribe({
+        next: (data: any) => {
+          this.walletBalance.set(data?.addMoneyToWallet?.balance || this.walletBalance() + this.topupAmount);
+          this.topupAmount = 0;
+        },
+        error: () => {}
+      });
+    }
+  }
 }

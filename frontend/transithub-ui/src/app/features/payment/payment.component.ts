@@ -1,10 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgFor, CurrencyPipe } from '@angular/common';
+import { NgFor, CurrencyPipe, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { inject } from '@angular/core';
+import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-payment', standalone: true, imports: [NgFor, FormsModule, CurrencyPipe],
+  selector: 'app-payment', standalone: true, imports: [NgFor, FormsModule, CurrencyPipe, NgIf],
   template: `
     <div class="container payment-page">
       <div class="payment-card">
@@ -15,14 +17,14 @@ import { FormsModule } from '@angular/forms';
         </div>
         <div class="payment-methods">
           <h3>Select Payment Method</h3>
-          <div *ngFor="let method of methods" class="method-card" [class.selected]="selectedMethod() === method" (click)="selectedMethod.set(method)">
+          <div *ngFor="let method of methods" class="method-card" [class.selected]="selectedMethod() === method.id" (click)="selectedMethod.set(method.id)">
             <span class="method-icon">{{method.icon}}</span>
             <span class="method-name">{{method.name}}</span>
           </div>
         </div>
-        <button (click)="pay()" class="pay-btn">Pay ₹{{totalAmount}}</button>
+        <button (click)="pay()" class="pay-btn" [disabled]="processing()">{{processing() ? 'Processing...' : 'Pay ₹' + totalAmount}}</button>
         <div *ngIf="paymentResult()" class="payment-result" [class.success]="paymentResult() === 'SUCCESS'" [class.failed]="paymentResult() === 'FAILED'">
-          {{paymentResult() === 'SUCCESS' ? 'Payment Successful! 🎉' : 'Payment Failed. Please try again.'}}
+          {{paymentResult() === 'SUCCESS' ? 'Payment Successful! 🎉 Redirecting...' : 'Payment Failed. Please try again.'}}
         </div>
       </div>
     </div>
@@ -40,29 +42,60 @@ import { FormsModule } from '@angular/forms';
     .method-icon { font-size: 24px; }
     .method-name { font-weight: 500; }
     .pay-btn { width: 100%; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 700; cursor: pointer; margin-top: 16px; }
+    .pay-btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .pay-btn:hover { background: #059669; }
-    .payment-result { padding: 16px; border-radius: 12px; margin-top: 20px; text-align: center; font-weight: 600; }
+    .payment-result { padding: 16px; border-radius: 12px; text-align: center; margin-top: 16px; font-weight: 600; }
     .success { background: #D1FAE5; color: #065F46; }
-    .failed { background: #FEE2E2; color: #991B1B; }
+    .failed { background: #FEF2F2; color: #DC2626; }
   `]
 })
-export class PaymentComponent {
+export class PaymentComponent implements OnInit {
   totalAmount = 5500;
-  bookingRef = '';
-  methods = [
-    { name: 'UPI (GPay/PhonePe)', icon: '📱' },
-    { name: 'Credit Card', icon: '💳' },
-    { name: 'Debit Card', icon: '🏦' },
-    { name: 'Net Banking', icon: '🌐' },
-    { name: 'Wallet', icon: '💰' },
-  ];
-  selectedMethod = signal(this.methods[0]);
+  selectedMethod = signal('UPI');
   paymentResult = signal<string | null>(null);
+  processing = signal(false);
+  bookingRef = '';
+  transactionId = '';
+  methods = [
+    { id: 'UPI', name: 'UPI (Google Pay / PhonePe)', icon: '📱' },
+    { id: 'CARD', name: 'Credit / Debit Card', icon: '💳' },
+    { id: 'NETBANKING', name: 'Net Banking', icon: '🏦' },
+    { id: 'WALLET', name: 'Wallet', icon: '💰' },
+  ];
+  private graphql = inject(GraphqlService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  ngOnInit() {
+    this.route.params.subscribe(params => {
+      this.bookingRef = params['ref'];
+    });
+  }
 
   pay() {
-    this.paymentResult.set('SUCCESS');
-    setTimeout(() => this.router.navigate(['/trips']), 2000);
+    this.processing.set(true);
+    this.graphql.initiatePayment(this.bookingRef, this.totalAmount, this.selectedMethod()).subscribe({
+      next: (data: any) => {
+        this.transactionId = data?.initiatePayment?.transactionId;
+        this.graphql.confirmPayment(this.transactionId, true).subscribe({
+          next: (result: any) => {
+            const status = result?.confirmPayment?.status;
+            this.paymentResult.set(status === 'SUCCESS' ? 'SUCCESS' : 'FAILED');
+            this.processing.set(false);
+            if (status === 'SUCCESS') {
+              setTimeout(() => this.router.navigate(['/trips']), 2000);
+            }
+          },
+          error: () => {
+            this.paymentResult.set('FAILED');
+            this.processing.set(false);
+          }
+        });
+      },
+      error: () => {
+        this.paymentResult.set('FAILED');
+        this.processing.set(false);
+      }
+    });
   }
 }

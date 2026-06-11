@@ -1,17 +1,21 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgFor, CurrencyPipe } from '@angular/common';
+import { NgFor, CurrencyPipe, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { inject } from '@angular/core';
+import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-train-booking', standalone: true, imports: [NgFor, FormsModule, CurrencyPipe],
+  selector: 'app-train-booking', standalone: true, imports: [NgFor, FormsModule, CurrencyPipe, NgIf],
   template: `
     <div class="container booking-page">
-      <div class="booking-card">
+      <div *ngIf="loading()" class="loading">Loading coach details...</div>
+      <div *ngIf="error()" class="error-msg">{{error()}}</div>
+      <div *ngIf="!loading() && !error()" class="booking-card">
         <h2>Train Booking</h2>
         <div class="train-summary">
-          <div class="route"><span class="city">NDLS</span> → <span class="city">MAS</span></div>
-          <div class="details">12434 Rajdhani Express · AC 2 Tier · Runs: Mon,Wed,Fri</div>
+          <div class="route"><span class="city">{{trainId}}</span> → <span class="city">Destination</span></div>
+          <div class="details">Coach: {{coachType || '3AC'}}</div>
           <div class="fare">₹{{baseFare()}}</div>
         </div>
         <div class="coach-section">
@@ -52,7 +56,7 @@ import { FormsModule } from '@angular/forms';
         </div>
         <div class="summary">
           <div class="total">Total: ₹{{totalFare()}}</div>
-          <button (click)="book()" class="book-btn">Confirm Booking</button>
+          <button (click)="book()" class="book-btn" [disabled]="booking()">{{booking() ? 'Booking...' : 'Confirm Booking'}}</button>
         </div>
       </div>
     </div>
@@ -76,16 +80,60 @@ import { FormsModule } from '@angular/forms';
     .summary { display: flex; justify-content: space-between; align-items: center; padding-top: 20px; border-top: 1px solid #E2E8F0; margin-top: 20px; }
     .total { font-size: 24px; font-weight: 700; color: #EA580C; }
     .book-btn { background: #EA580C; color: white; padding: 16px 48px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; }
+    .book-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .loading, .error-msg { text-align: center; padding: 40px; }
+    .error-msg { background: #FEF2F2; color: #DC2626; border-radius: 8px; }
   `]
 })
-export class TrainBookingComponent {
+export class TrainBookingComponent implements OnInit {
   baseFare = signal(2400);
-  quota = 'GENERAL';
-  berthPref = 'LOWER';
   passengers = signal([{ name: '', age: 0, gender: '' }]);
   totalFare = signal(2400);
+  quota = 'GENERAL';
+  berthPref = 'LOWER';
+  trainId = '';
+  coachType = '3AC';
+  loading = signal(true);
+  error = signal('');
+  booking = signal(false);
+  private graphql = inject(GraphqlService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private date = '';
 
-  constructor(private router: Router) {}
+  ngOnInit() {
+    this.route.params.subscribe(params => {
+      this.trainId = params['id'];
+      this.date = new Date().toISOString().split('T')[0];
+    });
+    this.route.queryParams.subscribe(params => {
+      if (params['coach']) this.coachType = params['coach'];
+      this.graphql.coachMap(this.trainId, this.date, this.coachType).subscribe({
+        next: (data: any) => {
+          const berths = data?.coachMap;
+          if (berths?.length) this.baseFare.set(berths[0].price || 2400);
+          this.loading.set(false);
+        },
+        error: () => { this.loading.set(false); }
+      });
+    });
+  }
+
   addPassenger() { this.passengers.update(p => [...p, { name: '', age: 0, gender: '' }]); }
-  book() { this.router.navigate(['/payment', 'TR-' + Date.now()]); }
+
+  book() {
+    this.booking.set(true);
+    this.graphql.bookTrain({
+      trainId: this.trainId, date: this.date,
+      coachType: this.coachType, quota: this.quota,
+      passengers: this.passengers(),
+      berthPreferences: [this.berthPref]
+    }).subscribe({
+      next: (data: any) => {
+        const ref = data?.bookTrain?.bookingRef || 'TR-' + Date.now();
+        this.router.navigate(['/payment', ref]);
+      },
+      error: () => { this.booking.set(false); }
+    });
+  }
 }

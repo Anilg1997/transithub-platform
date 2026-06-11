@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { NgIf } from '@angular/common';
+import { inject } from '@angular/core';
+import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -15,7 +17,7 @@ import { NgIf } from '@angular/common';
           <a routerLink="/trips" routerLinkActive="active">My Trips</a>
           <a routerLink="/notifications" routerLinkActive="active">Alerts</a>
           <a routerLink="/profile" routerLinkActive="active">Profile</a>
-          @if (!isAuthenticated()) {
+          @if (!authService.isAuthenticated()) {
             <a routerLink="/auth/login" class="btn-primary">Login</a>
           } @else {
             <button (click)="logout()" class="btn-outline">Logout</button>
@@ -46,6 +48,6 @@ import { NgIf } from '@angular/common';
   `]
 })
 export class AppComponent {
-  isAuthenticated = () => !!localStorage.getItem('accessToken');
-  logout() { localStorage.removeItem('accessToken'); localStorage.removeItem('refreshToken'); window.location.reload(); }
+  authService = inject(AuthService);
+  logout() { this.authService.logout(); }
 }

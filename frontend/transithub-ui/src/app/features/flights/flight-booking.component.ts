@@ -1,18 +1,22 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgFor, CurrencyPipe } from '@angular/common';
+import { NgFor, CurrencyPipe, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { inject } from '@angular/core';
+import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-flight-booking', standalone: true, imports: [NgFor, FormsModule, CurrencyPipe],
+  selector: 'app-flight-booking', standalone: true, imports: [NgFor, FormsModule, CurrencyPipe, NgIf],
   template: `
     <div class="container booking-page">
-      <div class="booking-card">
+      <div *ngIf="loading()" class="loading">Loading flight details...</div>
+      <div *ngIf="error()" class="error-msg">{{error()}}</div>
+      <div *ngIf="!loading() && !error()" class="booking-card">
         <h2>Flight Booking</h2>
         <div class="flight-summary">
-          <div class="route"><span class="city">DEL</span> → <span class="city">BOM</span></div>
-          <div class="details">AI101 · Air India · Non-stop · 2h 15m</div>
-          <div class="fare">₹{{baseFare()}}</div>
+          <div class="route"><span class="city">{{flightData()?.origin?.code || 'DEL'}}</span> → <span class="city">{{flightData()?.destination?.code || 'BOM'}}</span></div>
+          <div class="details">{{flightData()?.flightNumber || ''}} · {{flightData()?.airline || ''}} · {{flightData()?.stops === 0 ? 'Non-stop' : flightData()?.stops + ' stop(s)'}}</div>
+          <div class="fare">₹{{flightData()?.baseFare || baseFare()}}</div>
         </div>
         <div class="passengers-section">
           <h3>Passengers</h3>
@@ -49,7 +53,7 @@ import { FormsModule } from '@angular/forms';
         </div>
         <div class="summary">
           <div class="total">Total: ₹{{totalFare()}}</div>
-          <button (click)="book()" class="book-btn">Confirm Booking</button>
+          <button (click)="book()" class="book-btn" [disabled]="booking()">{{booking() ? 'Booking...' : 'Confirm Booking'}}</button>
         </div>
       </div>
     </div>
@@ -81,19 +85,73 @@ import { FormsModule } from '@angular/forms';
     .total { font-size: 24px; font-weight: 700; color: var(--primary); }
     .book-btn { background: var(--accent); color: white; padding: 16px 48px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; }
     .book-btn:hover { background: #059669; }
+    .book-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .loading, .error-msg { text-align: center; padding: 40px; }
+    .error-msg { background: #FEF2F2; color: #DC2626; border-radius: 8px; }
   `]
 })
-export class FlightBookingComponent {
+export class FlightBookingComponent implements OnInit {
   baseFare = signal(5500);
   passengers = signal([{ name: '', age: 0, gender: '', idType: 'AADHAAR', idNumber: '' }]);
   selectedSeats = signal<string[]>([]);
   seatMap = ['1A','1B','1C','1D','1E','1F','2A','2B','X','2D','2E','2F','3A','3B','3C','3D','3E','3F'];
   totalFare = signal(5500);
+  loading = signal(true);
+  error = signal('');
+  booking = signal(false);
+  flightData = signal<any>(null);
+  private graphql = inject(GraphqlService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private flightId = '';
+  private date = '';
 
-  constructor(private router: Router) {}
+  ngOnInit() {
+    this.route.params.subscribe(params => {
+      this.flightId = params['id'];
+      this.date = new Date().toISOString().split('T')[0];
+      this.graphql.flightDetail(this.flightId).subscribe({
+        next: (data: any) => {
+          const f = data?.flightDetail;
+          if (f) {
+            this.flightData.set(f);
+            this.baseFare.set(f.baseFare || 5500);
+            this.totalFare.set(f.totalFare || f.baseFare || 5500);
+          }
+          this.loading.set(false);
+        },
+        error: () => { this.loading.set(false); }
+      });
+      this.graphql.seatMap(this.flightId, this.date).subscribe({
+        next: (data: any) => {
+          const rows = data?.seatMap?.rows;
+          if (rows) {
+            this.seatMap = rows.flatMap((r: any) => r.seats?.map((s: any) => s.isAvailable ? s.seatNumber : 'X') || []);
+          }
+        },
+        error: () => {}
+      });
+    });
+  }
+
   addPassenger() { this.passengers.update(p => [...p, { name: '', age: 0, gender: '', idType: 'AADHAAR', idNumber: '' }]); }
   toggleSeat(seat: string) {
     this.selectedSeats.update(s => s.includes(seat) ? s.filter(x => x !== seat) : [...s, seat]);
   }
-  book() { this.router.navigate(['/payment', 'FL-' + Date.now()]); }
+
+  book() {
+    this.booking.set(true);
+    this.graphql.bookFlight({
+      flightId: this.flightId, date: this.date,
+      cabinClass: 'ECONOMY',
+      passengers: this.passengers(),
+      seatNumbers: this.selectedSeats()
+    }).subscribe({
+      next: (data: any) => {
+        const ref = data?.bookFlight?.bookingRef || 'FL-' + Date.now();
+        this.router.navigate(['/payment', ref]);
+      },
+      error: () => { this.booking.set(false); }
+    });
+  }
 }
