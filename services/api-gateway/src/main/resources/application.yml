@@ -1,44 +1,139 @@
-server:
-  port: 8080
 spring:
   application:
     name: api-gateway
+
   cloud:
     gateway:
       default-filters:
-        - DedupeResponseHeader=Access-Control-Allow-Origin
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
       globalcors:
         cors-configurations:
           '[/**]':
-            allowed-origins: ["http://localhost:4200"]
-            allowed-methods: [GET, POST, OPTIONS]
-            allowed-headers: ["*"]
-            allow-credentials: true
+            allowedOrigins: "http://localhost:4200"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
       routes:
-        - id: auth-service
-          uri: lb://auth-service
-          predicates: [{Path=/graphql}, {Header=X-Service, auth}]
+        # ===== Specific Services (must be BEFORE catch-all) =====
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, user
         - id: flight-inventory
           uri: lb://flight-inventory-service
-          predicates: [{Path=/graphql}, {Header=X-Service, flight}]
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, flight-inventory
+        - id: flight-booking
+          uri: lb://flight-booking-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, flight-booking
+        - id: flight-status
+          uri: lb://flight-status-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, flight-status
         - id: bus-inventory
           uri: lb://bus-inventory-service
-          predicates: [{Path=/graphql}, {Header=X-Service, bus}]
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, bus-inventory
+        - id: bus-booking
+          uri: lb://bus-booking-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, bus-booking
+        - id: bus-tracking
+          uri: lb://bus-tracking-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, bus-tracking
         - id: train-inventory
           uri: lb://train-inventory-service
-          predicates: [{Path=/graphql}, {Header=X-Service, train}]
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, train-inventory
+        - id: train-booking
+          uri: lb://train-booking-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, train-booking
+        - id: train-availability
+          uri: lb://train-availability-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, train-availability
         - id: payment
           uri: lb://payment-service
-          predicates: [{Path=/graphql}, {Header=X-Service, payment}]
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, payment
+        - id: refund
+          uri: lb://refund-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, refund
         - id: search
           uri: lb://search-service
-          predicates: [{Path=/graphql}, {Header=X-Service, search}]
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
-jwt:
-  secret: ${JWT_SECRET:TransitHub_JWT_Min32Char_SecretKey_2024}
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, search
+        - id: notification
+          uri: lb://notification-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, notification
+        - id: admin
+          uri: lb://admin-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, admin
+        - id: analytics
+          uri: lb://analytics-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, analytics
+        - id: audit
+          uri: lb://audit-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, audit
+        - id: document
+          uri: lb://document-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, document
+        - id: fare-engine
+          uri: lb://fare-engine-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, fare-engine
+        - id: inventory-lock
+          uri: lb://inventory-lock-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, inventory-lock
+        - id: booking-aggregator
+          uri: lb://booking-aggregator-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, booking-aggregator
+        # ===== Catch-All (LAST) =====
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/graphql
+
+  eureka:
+    client:
+      serviceUrl:
+        defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+
+server:
+  port: 8080
+
 management:
   tracing:
     sampling:
@@ -46,3 +141,6 @@ management:
   zipkin:
     tracing:
       endpoint: ${ZIPKIN_URI:http://localhost:9411/api/v2/spans}
+
+jwt:
+  secret: ${JWT_SECRET:TransitHub_JWT_Min32Char_SecretKey_2024}

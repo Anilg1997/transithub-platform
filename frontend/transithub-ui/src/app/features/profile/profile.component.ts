@@ -1,11 +1,11 @@
 import { Component, signal, OnInit } from '@angular/core';
-import { NgFor, CurrencyPipe, NgIf } from '@angular/common';
+import { NgFor, CurrencyPipe, DecimalPipe, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { inject } from '@angular/core';
 import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-profile', standalone: true, imports: [NgFor, FormsModule, CurrencyPipe, NgIf],
+  selector: 'app-profile', standalone: true, imports: [NgFor, FormsModule, CurrencyPipe, DecimalPipe, NgIf],
   template: `
     <div class="container profile-page">
       <div *ngIf="loading()" class="loading">Loading profile...</div>
