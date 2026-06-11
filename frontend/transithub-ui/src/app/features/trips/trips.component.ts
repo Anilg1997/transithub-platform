@@ -1,10 +1,10 @@
 import { Component, signal, OnInit, effect } from '@angular/core';
-import { NgFor, DatePipe, CurrencyPipe, NgIf } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { inject } from '@angular/core';
 import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-trips', standalone: true, imports: [NgFor, DatePipe, CurrencyPipe, NgIf],
+  selector: 'app-trips', standalone: true, imports: [NgFor, NgIf],
   template: `
     <div class="container trips-page">
       <h1>My Trips</h1>
