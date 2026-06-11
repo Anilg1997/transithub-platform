@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: train-availability-service
+server:
+  port: 8091
+spring:
+  redis:
+    host: ${REDIS_HOST:localhost}
+    password: ${REDIS_PASSWORD:Redis@2024}

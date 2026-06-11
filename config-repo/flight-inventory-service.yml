@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: flight-inventory-service
+server:
+  port: 8083
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/transithub}?currentSchema=flight_schema
+    username: ${DB_USERNAME:transithub}
+    password: ${DB_PASSWORD:TransitHub@2024}
+  jpa:
+    properties:
+      hibernate:
+        default_schema: flight_schema
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://admin:Mongo@2024@localhost:27017/transithub?authSource=admin}

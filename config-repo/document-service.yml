@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: document-service
+server:
+  port: 8096
+spring:
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://admin:Mongo@2024@localhost:27017/transithub?authSource=admin}
+aws:
+  s3:
+    endpoint-override: ${AWS_S3_ENDPOINT:http://localhost:4566}
+    bucket: ${S3_BUCKET:transithub-documents-dev}

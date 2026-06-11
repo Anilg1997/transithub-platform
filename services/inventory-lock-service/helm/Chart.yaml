@@ -1,0 +1,5 @@
+apiVersion: v2
+name: inventory-lock-service
+description: TransitHub inventory-lock-service microservice
+version: 1.0.0
+appVersion: 1.0.0

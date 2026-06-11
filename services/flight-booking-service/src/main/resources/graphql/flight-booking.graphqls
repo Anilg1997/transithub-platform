@@ -1,0 +1,17 @@
+enum CabinClass { ECONOMY, PREMIUM_ECONOMY, BUSINESS, FIRST }
+enum BaggageOption { KG_15, KG_20, KG_30 }
+enum BookingStatus { INITIATED, SEAT_LOCKED, PAYMENT_PENDING, CONFIRMED, CANCELLED, REFUND_INITIATED, REFUNDED }
+type Passenger { name: String!, age: Int!, gender: String!, idType: String!, idNumber: String!, seatNumber: String, baggageOption: String, mealPreference: String }
+input PassengerInput { name: String!, age: Int!, gender: String!, idType: String!, idNumber: String! }
+input FlightBookingInput { flightId: ID!, date: String!, cabinClass: CabinClass!, passengers: [PassengerInput!]!, seatNumbers: [String!], baggageOption: BaggageOption, mealPreference: String }
+type FlightBooking {
+  id: ID!, bookingRef: String!, pnr: String!, flightId: ID!, status: BookingStatus!
+  passengers: [Passenger!]!, seatNumbers: [String!]!, totalFare: Float!, bookedAt: String!
+}
+type Mutation {
+  bookFlight(input: FlightBookingInput!): FlightBooking!
+  cancelFlight(bookingRef: String!): FlightBooking!
+  checkIn(bookingRef: String!, pnr: String!): FlightBooking!
+}
+type Query { myFlightBookings: [FlightBooking!]!, flightBooking(bookingRef: String!): FlightBooking }
+type Subscription { flightBookingStatus(bookingRef: String!): FlightBooking! }

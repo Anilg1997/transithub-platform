@@ -1,0 +1,25 @@
+server:
+  port: 8083
+spring:
+  application:
+    name: flight-inventory-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/transithub}?currentSchema=flight_schema
+    username: ${DB_USERNAME:transithub}
+    password: ${DB_PASSWORD:TransitHub@2024}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: flight_schema
+  flyway:
+    schemas: flight_schema
+    locations: classpath:db/migration
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://admin:Mongo@2024@localhost:27017/transithub?authSource=admin}
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}

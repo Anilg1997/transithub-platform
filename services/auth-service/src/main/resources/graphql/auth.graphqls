@@ -1,0 +1,10 @@
+type UserProfile { id: ID!, email: String!, phone: String!, fullName: String!, isActive: Boolean!, role: String! }
+type AuthPayload { accessToken: String!, refreshToken: String!, expiresIn: Int!, user: UserProfile! }
+type Query { me: UserProfile! }
+type Mutation {
+  register(email: String!, phone: String!, fullName: String!, password: String!): AuthPayload!
+  login(emailOrPhone: String!, password: String!): AuthPayload!
+  refreshToken(refreshToken: String!): AuthPayload!
+  logout: Boolean!
+  verifyOtp(phone: String!, otp: String!): Boolean!
+}

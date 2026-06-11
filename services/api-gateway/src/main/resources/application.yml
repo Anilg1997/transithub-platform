@@ -1,0 +1,48 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: ["http://localhost:4200"]
+            allowed-methods: [GET, POST, OPTIONS]
+            allowed-headers: ["*"]
+            allow-credentials: true
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates: [{Path=/graphql}, {Header=X-Service, auth}]
+        - id: flight-inventory
+          uri: lb://flight-inventory-service
+          predicates: [{Path=/graphql}, {Header=X-Service, flight}]
+        - id: bus-inventory
+          uri: lb://bus-inventory-service
+          predicates: [{Path=/graphql}, {Header=X-Service, bus}]
+        - id: train-inventory
+          uri: lb://train-inventory-service
+          predicates: [{Path=/graphql}, {Header=X-Service, train}]
+        - id: payment
+          uri: lb://payment-service
+          predicates: [{Path=/graphql}, {Header=X-Service, payment}]
+        - id: search
+          uri: lb://search-service
+          predicates: [{Path=/graphql}, {Header=X-Service, search}]
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+jwt:
+  secret: ${JWT_SECRET:TransitHub_JWT_Min32Char_SecretKey_2024}
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_URI:http://localhost:9411/api/v2/spans}

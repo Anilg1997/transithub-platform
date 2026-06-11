@@ -1,0 +1,4 @@
+enum CoachType { SLEEPER, AC3, AC2, AC1, CHAIR_CAR, GENERAL }
+type Availability { trainId: ID!, date: String!, coachType: CoachType!, availableBerths: Int!, waitlistCount: Int! }
+type Query { availability(trainId: ID!, date: String!, coach: CoachType!): Availability }
+type Subscription { seatAvailabilityUpdate(trainId: ID!, date: String!): Availability }

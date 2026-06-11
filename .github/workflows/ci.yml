@@ -1,0 +1,94 @@
+name: TransitHub CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-services:
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - service-registry
+          - config-server
+          - api-gateway
+          - auth-service
+          - user-service
+          - flight-inventory-service
+          - flight-booking-service
+          - flight-status-service
+          - bus-inventory-service
+          - bus-booking-service
+          - bus-tracking-service
+          - train-inventory-service
+          - train-booking-service
+          - train-availability-service
+          - booking-aggregator-service
+          - inventory-lock-service
+          - payment-service
+          - refund-service
+          - document-service
+          - notification-service
+          - search-service
+          - analytics-service
+          - admin-service
+          - audit-service
+          - fare-engine-service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Build ${{ matrix.service }}
+        run: |
+          mvn clean package -pl services/${{ matrix.service }} -am -DskipTests --batch-mode
+      - name: Test ${{ matrix.service }}
+        run: |
+          mvn test -pl services/${{ matrix.service }} --batch-mode
+        continue-on-error: true
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend/transithub-ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/transithub-ui/package-lock.json
+      - run: npm ci
+      - run: npx ng build --configuration production --no-progress
+
+  localstack-verify:
+    runs-on: ubuntu-latest
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        env:
+          SERVICES: s3,sqs,sns,ses,secretsmanager
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+        ports:
+          - 4566:4566
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify LocalStack S3
+        run: |
+          aws --endpoint-url=http://localhost:4566 s3 mb s3://transithub-documents-dev
+          aws --endpoint-url=http://localhost:4566 s3api put-bucket-versioning --bucket transithub-documents-dev --versioning-configuration Status=Enabled
+          aws --endpoint-url=http://localhost:4566 s3 cp /etc/hosts s3://transithub-documents-dev/test-upload.txt
+          aws --endpoint-url=http://localhost:4566 s3 ls s3://transithub-documents-dev/
+        shell: bash

@@ -1,0 +1,10 @@
+enum BookingStatus { INITIATED, SEAT_LOCKED, PAYMENT_PENDING, CONFIRMED, CANCELLED, REFUND_INITIATED, REFUNDED }
+enum BusType { AC_SLEEPER, NON_AC_SLEEPER, AC_SEATER, NON_AC_SEATER, VOLVO, SEMI_SLEEPER }
+type Passenger { name: String!, age: Int!, gender: String!, idType: String!, idNumber: String! }
+input PassengerInput { name: String!, age: Int!, gender: String!, idType: String!, idNumber: String! }
+type BusSeat { seatNumber: String!, type: String!, deck: String!, isAvailable: Boolean!, price: Float! }
+input BusBookingInput { busId: ID!, date: String!, seats: [String!]!, boardingPoint: String!, droppingPoint: String!, passengers: [PassengerInput!]! }
+type BusBooking { id: ID!, bookingRef: String!, pnr: String!, busId: ID!, status: BookingStatus!, seats: [String!]!, passengerCount: Int!, totalFare: Float!, bookedAt: String! }
+type Mutation { bookBus(input: BusBookingInput!): BusBooking! cancelBus(bookingRef: String!): BusBooking! }
+type Query { myBusBookings: [BusBooking!]! busBooking(bookingRef: String!): BusBooking }
+type Subscription { busSeatLockStatus(busId: ID!, date: String!): BusSeat! }

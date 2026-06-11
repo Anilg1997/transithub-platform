@@ -1,0 +1,47 @@
+enum CabinClass { ECONOMY, PREMIUM_ECONOMY, BUSINESS, FIRST }
+enum BusType { AC_SLEEPER, NON_AC_SLEEPER, AC_SEATER, NON_AC_SEATER, VOLVO, SEMI_SLEEPER }
+enum CoachType { SLEEPER, AC3, AC2, AC1, CHAIR_CAR, GENERAL }
+enum Quota { GENERAL, LADIES, SENIOR_CITIZEN, TATKAL }
+scalar UUID
+type Airport { code: String!, name: String!, city: String!, country: String!, terminal: String }
+type Flight {
+  id: ID!, flightNumber: String!, airline: String!, airlineCode: String!
+  origin: Airport!, destination: Airport!
+  departureTime: String!, arrivalTime: String!, duration: Int!, stops: Int!
+  cabinClass: CabinClass!, totalSeats: Int!, availableSeats: Int!
+  baseFare: Float!, taxes: Float!, totalFare: Float!
+  isRefundable: Boolean!, cancellationFee: Float!
+}
+type Station { code: String!, name: String!, city: String!, state: String! }
+type Train { id: ID!, trainNumber: String!, trainName: String!, origin: Station!, destination: Station!, departureTime: String!, arrivalTime: String!, duration: Int!, runsOn: [String!]!, coaches: [Coach!]! }
+type Coach { coachType: CoachType!, totalBerths: Int!, availableBerths: Int!, fare: Float! }
+type BusRoute {
+  id: ID!, operator: String!, busType: BusType!, operatorRating: Float!
+  origin: String!, destination: String!, departureTime: String!, arrivalTime: String!
+  duration: Int!, totalSeats: Int!, availableSeats: Int!, fare: Float!
+  boardingPoints: [String!]!, droppingPoints: [String!]!
+  cancellationPolicy: String!
+}
+input FlightInput { flightNumber: String!, airlineCode: String!, origin: String!, destination: String!, departureTime: String!, arrivalTime: String!, duration: Int!, cabinClass: CabinClass!, totalSeats: Int!, baseFare: Float! }
+input BusRouteInput { operatorId: ID!, busType: BusType!, origin: String!, destination: String!, departureTime: String!, arrivalTime: String!, duration: Int!, totalSeats: Int!, fare: Float!, boardingPoints: [String!], droppingPoints: [String!] }
+input TrainInput { trainNumber: String!, trainName: String!, originCode: String!, destinationCode: String!, departureTime: String!, arrivalTime: String!, duration: Int!, runsOnDays: [String!]! }
+type FraudAlert { id: ID!, userId: UUID!, alertType: String!, description: String!, severity: String!, isResolved: Boolean!, createdAt: String! }
+type AdminUser { id: ID!, email: String!, phone: String!, fullName: String!, isActive: Boolean!, role: String!, createdAt: String! }
+type Mutation {
+  addFlight(input: FlightInput!): Flight!
+  updateFlight(flightId: ID!, input: FlightInput!): Flight!
+  deleteFlight(flightId: ID!): Boolean!
+  addBusRoute(input: BusRouteInput!): BusRoute!
+  updateBusRoute(routeId: ID!, input: BusRouteInput!): BusRoute!
+  deleteBusRoute(routeId: ID!): Boolean!
+  addTrain(input: TrainInput!): Train!
+  updateTrain(trainId: ID!, input: TrainInput!): Train!
+  deleteTrain(trainId: ID!): Boolean!
+  banUser(userId: ID!): Boolean!
+  unbanUser(userId: ID!): Boolean!
+  overrideBooking(bookingRef: String!, action: String!): Boolean!
+}
+type Query {
+  fraudAlerts: [FraudAlert!]!
+  allUsers(page: Int, size: Int): [AdminUser!]!
+}

@@ -1,0 +1,11 @@
+FROM eclipse-temurin:21-jdk-alpine AS build
+WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+COPY src ./src
+RUN mvn package -DskipTests -B
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8093
+ENTRYPOINT ["java", "--enable-preview", "-jar", "app.jar"]

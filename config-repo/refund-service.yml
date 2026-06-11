@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: refund-service
+server:
+  port: 8095
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/transithub}?currentSchema=refund_schema
+    username: ${DB_USERNAME:transithub}
+    password: ${DB_PASSWORD:TransitHub@2024}
+  jpa:
+    properties:
+      hibernate:
+        default_schema: refund_schema

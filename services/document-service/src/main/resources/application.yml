@@ -1,0 +1,12 @@
+server: port: 8096
+spring:
+  application: name: document-service
+  data: mongodb: uri: ${MONGO_URI:mongodb://admin:Mongo@2024@localhost:27017/transithub?authSource=admin}
+aws:
+  accessKeyId: ${AWS_ACCESS_KEY_ID:test}
+  secretKey: ${AWS_SECRET_ACCESS_KEY:test}
+  region: ${AWS_REGION:us-east-1}
+  s3:
+    endpoint-override: ${AWS_S3_ENDPOINT:http://localhost:4566}
+    bucket: ${S3_BUCKET:transithub-documents-dev}
+eureka: client: service-url: defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}

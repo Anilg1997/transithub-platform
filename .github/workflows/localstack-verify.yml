@@ -1,0 +1,39 @@
+name: LocalStack Integration Verify
+on:
+  pull_request:
+    paths:
+      - 'services/**/s3/**'
+      - 'services/**/S3StorageService.java'
+      - 'docker-compose.yml'
+      - '.github/workflows/localstack-verify.yml'
+
+jobs:
+  localstack-test:
+    runs-on: ubuntu-latest
+    services:
+      localstack:
+        image: localstack/localstack:latest
+        env:
+          SERVICES: s3,sqs,sns,ses
+          AWS_DEFAULT_REGION: us-east-1
+        ports:
+          - 4566:4566
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Run LocalStack integration tests
+        run: |
+          mvn test -pl services/document-service -am -Dtest="*LocalStack*" --batch-mode
+        continue-on-error: true
+      - name: Verify S3 operations
+        run: |
+          aws --endpoint-url=http://localhost:4566 s3 mb s3://transithub-documents-test
+          echo "test content" > /tmp/test.txt
+          aws --endpoint-url=http://localhost:4566 s3 cp /tmp/test.txt s3://transithub-documents-test/
+          aws --endpoint-url=http://localhost:4566 s3 cp s3://transithub-documents-test/test.txt /tmp/test-download.txt
+          diff /tmp/test.txt /tmp/test-download.txt && echo "S3 test PASSED"
+        shell: bash

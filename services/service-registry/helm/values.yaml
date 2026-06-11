@@ -1,0 +1,23 @@
+replicaCount: 2
+image:
+  repository: ghcr.io/transithub/service-registry
+  tag: latest
+  pullPolicy: Always
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+env:
+  SPRING_PROFILES_ACTIVE: "dev"
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70

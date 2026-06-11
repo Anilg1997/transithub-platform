@@ -1,0 +1,125 @@
+# TransitHub Shared Configuration
+# Applied to all services via Spring Cloud Config
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 100
+        order_inserts: true
+        order_updates: true
+        globally_quoted_identifiers: true
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSS'Z'
+    time-zone: UTC
+  kafka:
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        enable.idempotence: true
+        acks: all
+        retries: 3
+        max.in.flight.requests.per.connection: 5
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.transithub.*
+        spring.json.type.mapping: "*"
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+    listener:
+      ack-mode: MANUAL_IMMEDIATE
+  data:
+    redis:
+      timeout: 5000ms
+      connect-timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 4
+  cloud:
+    config:
+      enabled: true
+      fail-fast: true
+      retry:
+        initial-interval: 1000
+        max-interval: 2000
+        multiplier: 1.5
+        max-attempts: 10
+
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,env
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    com.transithub: DEBUG
+    org.springframework.graphql: TRACE
+    org.springframework.kafka: DEBUG
+    org.springframework.cloud: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%X{traceId}] - %msg%n"
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000ms
+        permitted-number-of-calls-in-half-open-state: 3
+  retry:
+    configs:
+      default:
+        max-attempts: 3
+        wait-duration: 500ms
+
+graphql:
+  graphiql:
+    enabled: true
+    path: /graphiql
+  websocket:
+    enabled: true
+    path: /graphql-ws
+  schema:
+    printer:
+      enabled: true
+    introspection:
+      enabled: true

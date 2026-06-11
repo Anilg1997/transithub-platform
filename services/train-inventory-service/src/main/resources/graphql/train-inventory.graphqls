@@ -1,0 +1,12 @@
+enum CoachType { SLEEPER, AC3, AC2, AC1, CHAIR_CAR, GENERAL }
+enum Quota { GENERAL, LADIES, SENIOR_CITIZEN, TATKAL }
+type Station { code: String!, name: String!, city: String!, state: String! }
+type Train { id: ID!, trainNumber: String!, trainName: String!, origin: Station!, destination: Station!, departureTime: String!, arrivalTime: String!, duration: Int!, runsOn: [String!]!, coaches: [Coach!]! }
+type Coach { coachType: CoachType!, totalBerths: Int!, availableBerths: Int!, fare: Float! }
+type Berth { berthNumber: String!, type: String!, isAvailable: Boolean!, price: Float! }
+type Query {
+  searchTrains(from: String!, to: String!, date: String!, quota: Quota): [Train!]!
+  trainDetail(trainId: ID!): Train
+  coachMap(trainId: ID!, date: String!, coachType: CoachType!): [Berth!]!
+  stations(query: String!): [Station!]!
+}

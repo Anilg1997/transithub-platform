@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: inventory-lock-service
+server:
+  port: 8093
+spring:
+  redis:
+    host: ${REDIS_HOST:localhost}
+    password: ${REDIS_PASSWORD:Redis@2024}

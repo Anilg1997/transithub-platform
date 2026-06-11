@@ -1,0 +1,83 @@
+# Java
+*.class
+*.jar
+*.war
+*.nar
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Maven
+log/
+tmp/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+*.swp
+*.swo
+*~
+
+# Eclipse
+bin/
+build/
+
+# IntelliJ
+out/
+.idea_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+*.dll
+*.so
+*.dylib
+
+# Node / Angular
+frontend/transithub-ui/node_modules/
+frontend/transithub-ui/dist/
+frontend/transithub-ui/.angular/
+frontend/transithub-ui/.env
+frontend/transithub-ui/coverage/
+
+# Docker
+docker-compose.override.yml
+.env
+
+# Logs
+*.log
+logs/
+
+# AWS
+.aws/
+credentials
+
+# LocalStack
+.localstack/
+
+# Terraform
+infra/terraform/.terraform/
+infra/terraform/terraform.tfstate*
+infra/terraform/*.plan
+
+# Helm
+helm/**/charts/
+helm/**/*.tgz
+
+# Spring Cloud Config
+config-repo/*.properties
+
+# Secret files
+**/secrets/
+**/secret*.yml
+**/secret*.yaml
+**/secret*.properties
+**/application-secret*.yml
+
+# Temp
+tmp/
+temp/
+*.tmp

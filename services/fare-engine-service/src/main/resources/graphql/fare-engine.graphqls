@@ -1,0 +1,6 @@
+type FareCalculation { baseFare: Float!, taxes: Float!, gst: Float!, convenienceFee: Float!, totalFare: Float!, demandMultiplier: Float! }
+type RefundPolicy { refundPercentage: Float!, cancellationFee: Float!, hoursBeforeDeparture: Int!, isRefundable: Boolean! }
+type Query {
+  calculateFare(inventoryType: String!, itemId: ID!, cabin: String, pax: Int): FareCalculation!
+  refundPolicy(bookingRef: String!, hoursBeforeDeparture: Int!): RefundPolicy!
+}

@@ -1,0 +1,20 @@
+type UserProfile { id: ID!, userId: UUID!, fullName: String!, dateOfBirth: String, gender: String, loyaltyPoints: Int!, loyaltyTier: String! }
+type Traveller { id: ID!, name: String!, age: Int!, gender: String!, idType: String!, idNumber: String!, isPrimary: Boolean! }
+type Wallet { id: ID!, balance: Float!, userId: UUID! }
+type WalletTransaction { id: ID!, type: String!, amount: Float!, description: String, createdAt: String! }
+type BookingHistory { mode: String!, bookingRef: String!, status: String!, totalFare: Float!, bookedAt: String! }
+type Query {
+  myProfile: UserProfile!
+  myTravellers: [Traveller!]!
+  loyaltyBalance: Int!
+  walletBalance: Float!
+  myBookings: [BookingHistory!]!
+}
+type Mutation {
+  updateProfile(fullName: String, dateOfBirth: String, gender: String): UserProfile!
+  addTraveller(name: String!, age: Int!, gender: String!, idType: String!, idNumber: String!): Traveller!
+  updateTraveller(id: ID!, name: String, age: Int, gender: String, idType: String, idNumber: String): Traveller!
+  deleteTraveller(id: ID!): Boolean!
+  addMoneyToWallet(amount: Float!): Wallet!
+}
+scalar UUID

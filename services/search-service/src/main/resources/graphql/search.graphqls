@@ -1,0 +1,9 @@
+enum TransportMode { FLIGHT, BUS, TRAIN }
+type AutocompleteResult { code: String!, name: String!, type: String!, city: String!, country: String }
+type PriceCalendarDay { date: String!, lowestFare: Float!, availability: String! }
+type PopularRoute { from: String!, to: String!, mode: TransportMode!, avgFare: Float!, bookingsCount: Int! }
+type Query {
+  autocomplete(query: String!, type: String): [AutocompleteResult!]!
+  priceCalendar(from: String!, to: String!, month: String!, mode: TransportMode!): [PriceCalendarDay!]!
+  popularRoutes(mode: TransportMode, limit: Int): [PopularRoute!]!
+}

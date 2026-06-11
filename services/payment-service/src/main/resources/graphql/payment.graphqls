@@ -1,0 +1,14 @@
+enum PaymentMethod { UPI, CREDIT_CARD, DEBIT_CARD, NET_BANKING, WALLET }
+enum PaymentStatus { INITIATED, PROCESSING, SUCCESS, FAILED, REFUNDED }
+input PaymentInput { bookingRef: String!, amount: Float!, method: PaymentMethod!, gstNumber: String }
+type Payment {
+  id: ID!, transactionId: String!, bookingRef: String!, amount: Float!, gst: Float!
+  convenienceFee: Float!, totalAmount: Float!, status: PaymentStatus!, method: PaymentMethod!, initiatedAt: String!, completedAt: String
+}
+type Mutation {
+  initiatePayment(input: PaymentInput!): Payment!
+  confirmPayment(transactionId: String!, mockSuccess: Boolean): Payment!
+  walletPay(bookingRef: String!): Payment!
+}
+type Query { paymentStatus(transactionId: String!): Payment, myPayments: [Payment!]! }
+type Subscription { paymentStatusUpdate(transactionId: String!): Payment! }

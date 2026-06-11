@@ -1,0 +1,19 @@
+enum CoachType { SLEEPER, AC3, AC2, AC1, CHAIR_CAR, GENERAL }
+enum Quota { GENERAL, LADIES, SENIOR_CITIZEN, TATKAL }
+enum BookingStatus { INITIATED, SEAT_LOCKED, PAYMENT_PENDING, CONFIRMED, CANCELLED, REFUND_INITIATED, REFUNDED }
+type Passenger { name: String!, age: Int!, gender: String!, idType: String!, idNumber: String! }
+input PassengerInput { name: String!, age: Int!, gender: String!, idType: String!, idNumber: String! }
+input TrainBookingInput { trainId: ID!, date: String!, coachType: CoachType!, quota: Quota!, passengers: [PassengerInput!]!, berthPreferences: [String!] }
+type TrainBooking {
+  id: ID!, bookingRef: String!, pnr: String!, trainId: ID!, status: BookingStatus!
+  passengers: [Passenger!]!, coach: String!, berths: [String!]!, totalFare: Float!, bookedAt: String!, waitlistNumber: Int
+}
+type Mutation {
+  bookTrain(input: TrainBookingInput!): TrainBooking!
+  cancelTrain(bookingRef: String!): TrainBooking!
+}
+type Query {
+  myTrainBookings: [TrainBooking!]!
+  trainBooking(bookingRef: String!): TrainBooking
+  checkPnrStatus(pnr: String!): TrainBooking
+}

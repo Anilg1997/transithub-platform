@@ -1,0 +1,104 @@
+spring:
+  application:
+    name: api-gateway
+server:
+  port: 8080
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, auth
+          filters:
+            - StripPrefix=0
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, user
+          filters:
+            - StripPrefix=0
+        - id: flight-inventory
+          uri: lb://flight-inventory-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, flight-inventory
+        - id: flight-booking
+          uri: lb://flight-booking-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, flight-booking
+        - id: bus-inventory
+          uri: lb://bus-inventory-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, bus-inventory
+        - id: bus-booking
+          uri: lb://bus-booking-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, bus-booking
+        - id: train-inventory
+          uri: lb://train-inventory-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, train-inventory
+        - id: train-booking
+          uri: lb://train-booking-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, train-booking
+        - id: payment
+          uri: lb://payment-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, payment
+        - id: booking-aggregator
+          uri: lb://booking-aggregator-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, booking
+        - id: search
+          uri: lb://search-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, search
+        - id: notification
+          uri: lb://notification-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, notification
+        - id: admin
+          uri: lb://admin-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, admin
+        - id: analytics
+          uri: lb://analytics-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, analytics
+        - id: document
+          uri: lb://document-service
+          predicates:
+            - Path=/graphql
+            - Header=X-Service, document
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - "http://localhost:4200"
+            allowed-methods:
+              - GET
+              - POST
+              - OPTIONS
+            allowed-headers:
+              - "*"
+            allow-credentials: true
+jwt:
+  secret: ${JWT_SECRET:TransitHub_JWT_Min32Char_SecretKey_2024}

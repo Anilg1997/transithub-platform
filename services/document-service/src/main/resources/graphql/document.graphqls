@@ -1,0 +1,6 @@
+type DocumentUrl { url: String!, expiresAt: String!, fileName: String! }
+type Query {
+  downloadTicket(bookingRef: String!): DocumentUrl!
+  downloadBoardingPass(bookingRef: String!, pnr: String!): DocumentUrl!
+  downloadReceipt(transactionId: String!): DocumentUrl!
+}

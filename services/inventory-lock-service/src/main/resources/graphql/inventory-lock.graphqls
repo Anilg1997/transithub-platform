@@ -1,0 +1,6 @@
+type LockResult { lockToken: String!, inventoryType: String!, itemId: String!, success: Boolean! }
+type Mutation {
+  lockSeat(inventoryType: String!, itemId: ID!, seatId: String!, userId: ID!): LockResult!
+  releaseSeat(inventoryType: String!, itemId: ID!, seatId: String!, userId: ID!, lockToken: String!): Boolean!
+  extendLock(inventoryType: String!, itemId: ID!, seatId: String!, userId: ID!, lockToken: String!): Boolean!
+}

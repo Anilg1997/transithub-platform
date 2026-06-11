@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: bus-booking-service
+server:
+  port: 8087
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/transithub}?currentSchema=bus_schema
+    username: ${DB_USERNAME:transithub}
+    password: ${DB_PASSWORD:TransitHub@2024}
+  jpa:
+    properties:
+      hibernate:
+        default_schema: bus_schema
+  redis:
+    host: ${REDIS_HOST:localhost}
+    password: ${REDIS_PASSWORD:Redis@2024}

@@ -1,0 +1,19 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/transithub}?currentSchema=user_schema
+    username: ${DB_USERNAME:transithub}
+    password: ${DB_PASSWORD:TransitHub@2024}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: user_schema
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}

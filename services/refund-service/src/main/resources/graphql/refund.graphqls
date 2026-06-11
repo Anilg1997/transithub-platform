@@ -1,0 +1,3 @@
+type Refund { id: ID!, refundRef: String!, bookingRef: String!, amount: Float!, refundType: String!, status: String!, initiatedAt: String!, completedAt: String }
+type Query { refundEstimate(bookingRef: String!, cancelType: String!): Float! myRefunds: [Refund!]! }
+type Mutation { processRefund(bookingRef: String!): Refund! }

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: admin-service
+description: TransitHub admin-service microservice
+version: 1.0.0
+appVersion: 1.0.0

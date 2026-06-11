@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: auth-service
+server:
+  port: 8081
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/transithub}?currentSchema=auth_schema
+    username: ${DB_USERNAME:transithub}
+    password: ${DB_PASSWORD:TransitHub@2024}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+  jpa:
+    properties:
+      hibernate:
+        default_schema: auth_schema
+jwt:
+  secret: ${JWT_SECRET:TransitHub_JWT_Min32Char_SecretKey_2024}
+  access-token-expiry: 900
+  refresh-token-expiry: 604800

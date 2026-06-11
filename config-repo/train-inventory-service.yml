@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: train-inventory-service
+server:
+  port: 8089
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/transithub}?currentSchema=train_schema
+    username: ${DB_USERNAME:transithub}
+    password: ${DB_PASSWORD:TransitHub@2024}
+  jpa:
+    properties:
+      hibernate:
+        default_schema: train_schema

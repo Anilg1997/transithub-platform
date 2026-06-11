@@ -1,0 +1,20 @@
+enum CabinClass { ECONOMY, PREMIUM_ECONOMY, BUSINESS, FIRST }
+enum BaggageOption { KG_15, KG_20, KG_30 }
+type Airport { code: String!, name: String!, city: String!, country: String!, terminal: String }
+type Flight {
+  id: ID!, flightNumber: String!, airline: String!, airlineCode: String!
+  origin: Airport!, destination: Airport!
+  departureTime: String!, arrivalTime: String!, duration: Int!, stops: Int!
+  cabinClass: CabinClass!, totalSeats: Int!, availableSeats: Int!
+  baseFare: Float!, taxes: Float!, totalFare: Float!
+  isRefundable: Boolean!, cancellationFee: Float!
+}
+type SeatMap { rows: [SeatRow!]! }
+type SeatRow { rowNumber: Int!, seats: [Seat!]! }
+type Seat { seatNumber: String!, type: String!, isAvailable: Boolean!, extraLegroom: Boolean!, price: Float! }
+type Query {
+  searchFlights(origin: String!, destination: String!, date: String!, cabinClass: CabinClass, passengers: Int): [Flight!]!
+  flightDetail(flightId: ID!): Flight
+  seatMap(flightId: ID!, date: String!): SeatMap!
+  airports(query: String!): [Airport!]!
+}

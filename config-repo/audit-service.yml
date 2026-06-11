@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: audit-service
+server:
+  port: 8101
+spring:
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://admin:Mongo@2024@localhost:27017/transithub?authSource=admin}

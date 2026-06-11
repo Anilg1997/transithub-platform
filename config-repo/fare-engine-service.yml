@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: fare-engine-service
+server:
+  port: 8102
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/transithub}?currentSchema=fare_schema
+    username: ${DB_USERNAME:transithub}
+    password: ${DB_PASSWORD:TransitHub@2024}
+  jpa:
+    properties:
+      hibernate:
+        default_schema: fare_schema
+  redis:
+    host: ${REDIS_HOST:localhost}
+    password: ${REDIS_PASSWORD:Redis@2024}

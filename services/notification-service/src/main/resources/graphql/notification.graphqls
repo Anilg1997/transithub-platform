@@ -1,0 +1,4 @@
+type Notification { id: ID!, type: String!, title: String!, message: String!, isRead: Boolean!, metadata: String, createdAt: String! }
+type Query { myNotifications(page: Int, size: Int): [Notification!]! unreadCount: Int! }
+type Mutation { markRead(notificationId: ID!): Notification! markAllRead: Boolean! }
+type Subscription { newNotification: Notification! }

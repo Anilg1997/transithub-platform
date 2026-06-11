@@ -1,0 +1,2 @@
+type BusLocation { busId: String!, latitude: Float!, longitude: Float!, speed: Float!, nextStop: String!, eta: String!, updatedAt: String! }
+type Subscription { busLocation(busId: ID!): BusLocation }

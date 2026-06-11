@@ -1,0 +1,11 @@
+enum TransportMode { FLIGHT, BUS, TRAIN }
+type PopularRoute { from: String!, to: String!, mode: TransportMode!, avgFare: Float!, bookingsCount: Int! }
+type DailyRevenue { date: String!, flightRevenue: Float!, busRevenue: Float!, trainRevenue: Float!, totalRevenue: Float! }
+type BookingByMode { mode: String!, count: Int!, revenue: Float!, cancellations: Int! }
+type Query {
+  dailyRevenue(from: String!, to: String!): [DailyRevenue!]!
+  bookingsByMode(from: String!, to: String!): [BookingByMode!]!
+  topRoutes(mode: TransportMode, limit: Int): [PopularRoute!]!
+  cancellationRate(from: String!, to: String!): Float!
+  totalUsers: Int!
+}

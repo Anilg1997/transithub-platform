@@ -1,0 +1,6 @@
+server: port: 8097
+spring:
+  application: name: notification-service
+  data: mongodb: uri: ${MONGO_URI:mongodb://admin:Mongo@2024@localhost:27017/transithub?authSource=admin}
+  mail: host: ${MAIL_HOST:localhost}; port: ${MAIL_PORT:4566}
+eureka: client: service-url: defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}

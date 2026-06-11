@@ -1,0 +1,64 @@
+name: TransitHub CD - EKS Deploy
+on:
+  workflow_run:
+    workflows: ["TransitHub CI"]
+    branches: [main]
+    types: [completed]
+
+env:
+  AWS_REGION: ap-south-1
+  EKS_CLUSTER: transithub-cluster
+  GHCR_REGISTRY: ghcr.io
+  GHCR_REPOSITORY: ${{ github.repository }}
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && secrets.AWS_ACCESS_KEY_ID != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GHCR_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER }} --region ${{ env.AWS_REGION }}
+
+      - name: Build and push images
+        run: |
+          SERVICES=$(docker compose config --services 2>/dev/null | grep -v postgres | grep -v mongodb | grep -v redis | grep -v zookeeper | grep -v kafka | grep -v elasticsearch | grep -v localstack | grep -v zipkin | grep -v prometheus | grep -v grafana | grep -v kafka-ui | grep -v mongo-express | grep -v pgadmin || echo "")
+          if [ -z "$SERVICES" ]; then
+            echo "No services to deploy"
+            exit 0
+          fi
+          for SERVICE in $SERVICES; do
+            IMAGE=${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}/$SERVICE:${{ github.sha }}
+            docker build -t $IMAGE -f services/$SERVICE/Dockerfile services/$SERVICE
+            docker push $IMAGE
+            
+            # Deploy with Helm if chart exists
+            if [ -f "services/$SERVICE/helm/Chart.yaml" ]; then
+              helm upgrade --install $SERVICE ./services/$SERVICE/helm \
+                --namespace transithub --create-namespace \
+                --set image.repository=${{ env.GHCR_REGISTRY }}/${{ env.GHCR_REPOSITORY }}/$SERVICE \
+                --set image.tag=${{ github.sha }} \
+                --wait --timeout 5m
+            fi
+          done
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment -n transithub --timeout=300s
+          kubectl get pods -n transithub

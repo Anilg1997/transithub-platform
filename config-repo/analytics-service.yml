@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: analytics-service
+server:
+  port: 8099
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/transithub}
+    username: ${DB_USERNAME:transithub}
+    password: ${DB_PASSWORD:TransitHub@2024}

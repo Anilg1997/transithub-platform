@@ -1,0 +1,5 @@
+apiVersion: v2
+name: api-gateway
+description: TransitHub api-gateway microservice
+version: 1.0.0
+appVersion: 1.0.0

@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: booking-aggregator-service
+server:
+  port: 8092
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/transithub}?currentSchema=booking_schema
+    username: ${DB_USERNAME:transithub}
+    password: ${DB_PASSWORD:TransitHub@2024}
+  jpa:
+    properties:
+      hibernate:
+        default_schema: booking_schema

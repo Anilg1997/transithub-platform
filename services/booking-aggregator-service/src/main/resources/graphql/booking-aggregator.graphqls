@@ -1,0 +1,9 @@
+enum TransportMode { FLIGHT, BUS, TRAIN }
+input PassengerInput { name: String!, age: Int!, gender: String!, idType: String!, idNumber: String! }
+input TripSegmentInput { mode: TransportMode!, from: String!, to: String!, date: String! }
+type TripOption { segments: [TripSegment!]!, totalFare: Float!, totalDuration: Int!, transfers: Int! }
+type TripSegment { mode: TransportMode!, from: String!, to: String!, departure: String!, arrival: String!, operator: String!, fare: Float!, availableOptions: Int! }
+type BookingSegment { mode: TransportMode!, bookingRef: String!, status: String!, fare: Float! }
+type MultiModalBooking { id: ID!, combinedRef: String!, segments: [BookingSegment!]!, totalFare: Float!, status: String!, createdAt: String! }
+type Query { planTrip(segments: [TripSegmentInput!]!, pax: Int): [TripOption!]! myBookings: [MultiModalBooking!]! }
+type Mutation { createMultiModalBooking(segments: [TripSegmentInput!]!, passengers: [PassengerInput!]!): MultiModalBooking! }

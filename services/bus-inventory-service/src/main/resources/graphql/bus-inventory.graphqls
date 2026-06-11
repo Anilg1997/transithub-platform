@@ -1,0 +1,15 @@
+enum BusType { AC_SLEEPER, NON_AC_SLEEPER, AC_SEATER, NON_AC_SEATER, VOLVO, SEMI_SLEEPER }
+type BusRoute {
+  id: ID!, operator: String!, busType: BusType!, operatorRating: Float!
+  origin: String!, destination: String!, departureTime: String!, arrivalTime: String!
+  duration: Int!, totalSeats: Int!, availableSeats: Int!, fare: Float!
+  boardingPoints: [String!]!, droppingPoints: [String!]!
+  cancellationPolicy: String!
+}
+type BusSeat { seatNumber: String!, type: String!, deck: String!, isAvailable: Boolean!, price: Float! }
+type Query {
+  searchBuses(origin: String!, destination: String!, date: String!): [BusRoute!]!
+  busDetail(busId: ID!): BusRoute
+  busSeatMap(busId: ID!, date: String!): [BusSeat!]!
+}
+type Subscription { busSeatLockStatus(busId: ID!, date: String!): BusSeat! }

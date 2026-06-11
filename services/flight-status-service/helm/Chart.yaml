@@ -1,0 +1,5 @@
+apiVersion: v2
+name: flight-status-service
+description: TransitHub flight-status-service microservice
+version: 1.0.0
+appVersion: 1.0.0
