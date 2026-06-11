@@ -1,12 +1,12 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgFor, CurrencyPipe, NgIf } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { inject } from '@angular/core';
 import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-train-booking', standalone: true, imports: [NgFor, FormsModule, CurrencyPipe, NgIf],
+  selector: 'app-train-booking', standalone: true, imports: [NgFor, FormsModule, NgIf],
   template: `
     <div class="container booking-page">
       <div *ngIf="loading()" class="loading">Loading coach details...</div>

@@ -121,7 +121,15 @@ spring:
             - Path=/graphql
             - Header=X-Service, booking-aggregator
         # ===== Catch-All (LAST) =====
-        - id: auth-service
+        - 
+        # ===== WebSocket Subscriptions (before catch-all) =====
+        - id: websocket-subscriptions
+          uri: lb:ws://notification-service
+          predicates:
+            - Path=/graphql-ws
+          filters:
+            - StripPrefix=0
+        id: auth-service
           uri: lb://auth-service
           predicates:
             - Path=/graphql

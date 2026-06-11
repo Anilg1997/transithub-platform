@@ -1,11 +1,11 @@
 import { Component, signal, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { NgFor, CurrencyPipe, NgIf } from '@angular/common';
+import { NgFor, NgIf } from '@angular/common';
 import { inject } from '@angular/core';
 import { GraphqlService } from '../../services/graphql.service';
 
 @Component({
-  selector: 'app-train-results', standalone: true, imports: [NgFor, CurrencyPipe, NgIf],
+  selector: 'app-train-results', standalone: true, imports: [NgFor, NgIf],
   template: `
     <div class="container results-page">
       <div class="results">
