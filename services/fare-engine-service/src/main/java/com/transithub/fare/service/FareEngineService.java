@@ -50,11 +50,14 @@ public class FareEngineService {
     }
 
     public RefundPolicy getRefundPolicy(String bookingRef, int hoursBeforeDeparture) {
-        return switch (hoursBeforeDeparture) {
-            case int h when h >= 48 -> new RefundPolicy(80.0, 200.0, hoursBeforeDeparture, true);
-            case int h when h >= 24 -> new RefundPolicy(50.0, 500.0, hoursBeforeDeparture, true);
-            case int h when h >= 12 -> new RefundPolicy(25.0, 750.0, hoursBeforeDeparture, true);
-            default -> new RefundPolicy(0.0, 0.0, hoursBeforeDeparture, false);
-        };
+        if (hoursBeforeDeparture >= 48) {
+            return new RefundPolicy(80.0, 200.0, hoursBeforeDeparture, true);
+        } else if (hoursBeforeDeparture >= 24) {
+            return new RefundPolicy(50.0, 500.0, hoursBeforeDeparture, true);
+        } else if (hoursBeforeDeparture >= 12) {
+            return new RefundPolicy(25.0, 750.0, hoursBeforeDeparture, true);
+        } else {
+            return new RefundPolicy(0.0, 0.0, hoursBeforeDeparture, false);
+        }
     }
 }
