@@ -125,4 +125,6 @@ public class AuthService {
     }
 
     public boolean verifyOtp(String phone, String otp) {
-        return "1234".equals(
+        return "1234".equals(otp);
+    }
+    }

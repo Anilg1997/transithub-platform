@@ -23,8 +23,8 @@ public class SearchService {
     public List<AutocompleteResult> autocomplete(String query, String type) {
         var results = new java.util.ArrayList<AutocompleteResult>();
         try {
-            var searchQuery = new org.springframework.data.elasticsearch.core.query.StringQueryBuilder("*" + query + "*").build();
-            var response = elasticsearch.search(searchQuery, Map.class, "places");
+            var searchQuery = new org.springframework.data.elasticsearch.core.query.StringQuery("*" + query + "*");
+            var response = elasticsearch.search(searchQuery, Map.class, org.springframework.data.elasticsearch.core.mapping.IndexCoordinates.of("places"));
             response.forEach(hit -> {
                 var doc = hit.getContent();
                 results.add(new AutocompleteResult(

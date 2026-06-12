@@ -53,8 +53,18 @@ public class AdminService {
             "INSERT INTO flight_schema.flights (id, flight_number, airline_code, origin_code, destination_code, " +
             "departure_time, arrival_time, duration, cabin_class, total_seats, base_fare, taxes, total_fare, is_refundable, cancellation_fee) " +
             "VALUES (:id, :fn, :ac, :orig, :dest, :dep, :arr, :dur, :cc, :ts, :bf, 0, :bf, true, 0)",
-            Map.of("id", id, "fn", flightNumber, "ac", airlineCode, "orig", origin, "dest", destination,
-                "dep", departureTime, "arr", arrivalTime, "dur", duration, "cc", cabinClass, "ts", totalSeats, "bf", baseFare));
+            Map.ofEntries(
+                Map.entry("id", id),
+                Map.entry("fn", flightNumber),
+                Map.entry("ac", airlineCode),
+                Map.entry("orig", origin),
+                Map.entry("dest", destination),
+                Map.entry("dep", departureTime),
+                Map.entry("arr", arrivalTime),
+                Map.entry("dur", duration),
+                Map.entry("cc", cabinClass),
+                Map.entry("ts", totalSeats),
+                Map.entry("bf", baseFare)));
         return new Flight(id.toString(), flightNumber, airlineCode, origin, destination,
             departureTime, arrivalTime, duration, cabinClass, totalSeats, baseFare);
     }
@@ -67,9 +77,18 @@ public class AdminService {
             "UPDATE flight_schema.flights SET flight_number = :fn, airline_code = :ac, origin_code = :orig, " +
             "destination_code = :dest, departure_time = :dep, arrival_time = :arr, duration = :dur, " +
             "cabin_class = :cc, total_seats = :ts, base_fare = :bf WHERE id = :id",
-            Map.of("id", UUID.fromString(flightId), "fn", flightNumber, "ac", airlineCode, "orig", origin,
-                "dest", destination, "dep", departureTime, "arr", arrivalTime, "dur", duration,
-                "cc", cabinClass, "ts", totalSeats, "bf", baseFare));
+            Map.ofEntries(
+                Map.entry("id", UUID.fromString(flightId)),
+                Map.entry("fn", flightNumber),
+                Map.entry("ac", airlineCode),
+                Map.entry("orig", origin),
+                Map.entry("dest", destination),
+                Map.entry("dep", departureTime),
+                Map.entry("arr", arrivalTime),
+                Map.entry("dur", duration),
+                Map.entry("cc", cabinClass),
+                Map.entry("ts", totalSeats),
+                Map.entry("bf", baseFare)));
         return new Flight(flightId, flightNumber, airlineCode, origin, destination,
             departureTime, arrivalTime, duration, cabinClass, totalSeats, baseFare);
     }
@@ -88,10 +107,19 @@ public class AdminService {
             "INSERT INTO bus_schema.bus_routes (id, operator, bus_type, origin, destination, departure_time, " +
             "arrival_time, duration, total_seats, available_seats, fare, boarding_points, dropping_points, cancellation_policy, is_active) " +
             "VALUES (:id, :op, :bt, :orig, :dest, :dep, :arr, :dur, :ts, :ts, :fare, :bp, :dp, 'Standard policy', true)",
-            Map.of("id", id, "op", operatorId, "bt", busType, "orig", origin, "dest", destination,
-                "dep", departureTime, "arr", arrivalTime, "dur", duration, "ts", totalSeats, "fare", fare,
-                "bp", String.join(",", boardingPoints != null ? boardingPoints : List.of()),
-                "dp", String.join(",", droppingPoints != null ? droppingPoints : List.of())));
+            Map.ofEntries(
+                Map.entry("id", id),
+                Map.entry("op", operatorId),
+                Map.entry("bt", busType),
+                Map.entry("orig", origin),
+                Map.entry("dest", destination),
+                Map.entry("dep", departureTime),
+                Map.entry("arr", arrivalTime),
+                Map.entry("dur", duration),
+                Map.entry("ts", totalSeats),
+                Map.entry("fare", fare),
+                Map.entry("bp", String.join(",", boardingPoints != null ? boardingPoints : List.of())),
+                Map.entry("dp", String.join(",", droppingPoints != null ? droppingPoints : List.of()))));
         return new BusRoute(id.toString(), operatorId, busType, origin, destination,
             departureTime, arrivalTime, duration, totalSeats, fare, boardingPoints, droppingPoints);
     }
@@ -104,10 +132,19 @@ public class AdminService {
             "UPDATE bus_schema.bus_routes SET operator = :op, bus_type = :bt, origin = :orig, destination = :dest, " +
             "departure_time = :dep, arrival_time = :arr, duration = :dur, total_seats = :ts, fare = :fare, " +
             "boarding_points = :bp, dropping_points = :dp WHERE id = :id",
-            Map.of("id", UUID.fromString(routeId), "op", operatorId, "bt", busType, "orig", origin, "dest", destination,
-                "dep", departureTime, "arr", arrivalTime, "dur", duration, "ts", totalSeats, "fare", fare,
-                "bp", String.join(",", boardingPoints != null ? boardingPoints : List.of()),
-                "dp", String.join(",", droppingPoints != null ? droppingPoints : List.of())));
+            Map.ofEntries(
+                Map.entry("id", UUID.fromString(routeId)),
+                Map.entry("op", operatorId),
+                Map.entry("bt", busType),
+                Map.entry("orig", origin),
+                Map.entry("dest", destination),
+                Map.entry("dep", departureTime),
+                Map.entry("arr", arrivalTime),
+                Map.entry("dur", duration),
+                Map.entry("ts", totalSeats),
+                Map.entry("fare", fare),
+                Map.entry("bp", String.join(",", boardingPoints != null ? boardingPoints : List.of())),
+                Map.entry("dp", String.join(",", droppingPoints != null ? droppingPoints : List.of()))));
         return new BusRoute(routeId, operatorId, busType, origin, destination,
             departureTime, arrivalTime, duration, totalSeats, fare, boardingPoints, droppingPoints);
     }
